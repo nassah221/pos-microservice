@@ -1,4 +1,4 @@
-# pos-microservice
+# pos-microservices
 
 Point of Sales APIs implemented using microservice architecture
 
