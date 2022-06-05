@@ -40,6 +40,7 @@ func (r *cashierRepository) Create(ctx context.Context, cashier *model.Cashier) 
 
 	return result.InsertedID.(primitive.ObjectID).Hex(), nil
 }
+
 func (r *cashierRepository) GetByID(ctx context.Context, id string) (*model.Cashier, error) {
 	var cashier model.Cashier
 
