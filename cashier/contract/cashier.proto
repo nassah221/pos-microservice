@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package cashier;
+
+option go_package = "/cashier";
+
+message Cashier {
+    string id = 1;
+    string name = 2;
+    string email = 3;
+    string password = 4;
+    int64 created = 5;
+    int64 updated = 6;
+}
+
+message GetCashierRequest {
+    string id = 1;
+}
+
+message ListCashiersRequest{}
+
+message ListCashiersResponse{
+    repeated Cashier cashiers = 1;
+}
+
+message SigninRequest{
+    string email = 1;
+    string password = 2;
+}
+
+message SigninResponse {
+    Cashier cashier = 1;
+    string token = 2;
+}
+
+message DeleteCashierResponse {
+    string id = 1;
+}
+
+service CashierService {
+    rpc Signup(Cashier) returns (Cashier);
+    rpc Signin(SigninRequest) returns (SigninResponse);
+    rpc GetCashier(GetCashierRequest) returns (Cashier);
+    rpc ListCashiers(ListCashiersRequest) returns (ListCashiersResponse);
+    rpc UpdateCashier(Cashier) returns (Cashier);
+    rpc DeleteCashier(GetCashierRequest) returns (DeleteCashierResponse);
+}
