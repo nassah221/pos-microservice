@@ -30,8 +30,7 @@ type CashierRepository interface {
 }
 
 func (r *cashierRepository) Create(ctx context.Context, cashier *model.Cashier) (string, error) {
-	id := primitive.NewObjectID()
-	cashier.ID = id
+	cashier.ID = primitive.NewObjectID()
 
 	result, err := r.Collection().InsertOne(ctx, cashier)
 	if err != nil {

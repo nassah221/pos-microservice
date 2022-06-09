@@ -2,7 +2,9 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"math/rand"
 	"testing"
 	"time"
 
@@ -13,7 +15,12 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-var r CashierRepository
+var r repoWrapper
+
+type repoWrapper struct {
+	CashierRepository
+	Drop func(context.Context) error
+}
 
 func init() {
 	cfg, err := db.NewConfig("../.env")
@@ -25,33 +32,54 @@ func init() {
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
-	r = NewRepository(s)
-	s.Collection().Drop(context.Background())
+
+	r = repoWrapper{NewRepository(s), s.Collection().Drop}
 }
 
-func TestCreateCashier(t *testing.T) {
-	cashier := &model.Cashier{
-		Name:     "TEST",
-		Email:    "create@test.com",
-		Password: "whatever",
+const (
+	alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+)
+
+func generateRandomString(n int) string {
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = alphabet[rand.Intn(len(alphabet))]
+	}
+
+	return string(b)
+}
+
+func generateRandomEmail() string {
+	return generateRandomString(10) + "@test.com"
+}
+
+func newCashier(t *testing.T) *model.Cashier {
+	t.Helper()
+
+	return &model.Cashier{
+		Name:     fmt.Sprintf("%s-%s", t.Name(), generateRandomString(10)),
+		Email:    generateRandomEmail(),
+		Password: "foo",
 		Created:  time.Now().Unix(),
 		Updated:  time.Now().Unix(),
 	}
+}
+
+func TestCreateCashier(t *testing.T) {
+	cashier := newCashier(t)
 
 	id, err := r.Create(context.Background(), cashier)
 	assert.NoError(t, err)
 
 	assert.NotEmpty(t, id)
+
+	t.Cleanup(func() {
+		r.Drop(context.Background())
+	})
 }
 
 func TestGetCashierByID(t *testing.T) {
-	cashier := &model.Cashier{
-		Name:     "TEST",
-		Email:    "getbyid@test.com",
-		Password: "whatever",
-		Created:  time.Now().Unix(),
-		Updated:  time.Now().Unix(),
-	}
+	cashier := newCashier(t)
 
 	id, err := r.Create(context.Background(), cashier)
 	assert.NoError(t, err)
@@ -68,15 +96,14 @@ func TestGetCashierByID(t *testing.T) {
 	id = primitive.NewObjectID().Hex()
 	_, err = r.GetByID(context.Background(), id)
 	assert.Error(t, err)
+
+	t.Cleanup(func() {
+		r.Drop(context.Background())
+	})
 }
 
 func TestGetCashierByEmail(t *testing.T) {
-	cashier := &model.Cashier{
-		Name:     "TEST",
-		Password: "whatever",
-		Created:  time.Now().Unix(),
-		Updated:  time.Now().Unix(),
-	}
+	cashier := newCashier(t)
 
 	email := "getbyemail@test.com"
 	cashier.Email = email
@@ -91,16 +118,14 @@ func TestGetCashierByEmail(t *testing.T) {
 
 	assert.NotNil(t, found)
 	assert.Equal(t, email, found.Email)
+
+	t.Cleanup(func() {
+		r.Drop(context.Background())
+	})
 }
 
 func TestUpdateCashier(t *testing.T) {
-	cashier := &model.Cashier{
-		Name:     "TEST",
-		Email:    "update@test.com",
-		Password: "whatever",
-		Created:  time.Now().Unix(),
-		Updated:  time.Now().Unix(),
-	}
+	cashier := newCashier(t)
 
 	id, err := r.Create(context.Background(), cashier)
 	assert.NoError(t, err)
@@ -126,26 +151,44 @@ func TestUpdateCashier(t *testing.T) {
 
 	err = r.Update(context.Background(), cashier)
 	assert.Error(t, err)
+
+	t.Cleanup(func() {
+		r.Drop(context.Background())
+	})
 }
 
 func TestListCashiers(t *testing.T) {
+	insertCashiers := []struct {
+		cashier *model.Cashier
+		err     error
+	}{
+		{newCashier(t), nil},
+		{newCashier(t), nil},
+		{newCashier(t), nil},
+	}
+
+	for _, tt := range insertCashiers {
+		_, err := r.Create(context.Background(), tt.cashier)
+		assert.NoError(t, err)
+	}
+
 	cashiers, err := r.GetAll(context.Background())
 	assert.NoError(t, err)
 	assert.NotNil(t, cashiers)
+	assert.Equal(t, len(insertCashiers), len(cashiers))
 
 	for _, cashier := range cashiers {
 		assert.NotEmpty(t, cashier.ID.Hex())
 	}
+
+	t.Cleanup(func() {
+		r.Drop(context.Background())
+	})
 }
 
 func TestDeleteCashiers(t *testing.T) {
-	cashier := &model.Cashier{
-		Name:     "TEST",
-		Email:    "delete@test.com",
-		Password: "whatever",
-		Created:  time.Now().Unix(),
-		Updated:  time.Now().Unix(),
-	}
+	cashier := newCashier(t)
+
 	id, err := r.Create(context.Background(), cashier)
 	assert.NoError(t, err)
 
@@ -158,4 +201,8 @@ func TestDeleteCashiers(t *testing.T) {
 	id = primitive.NewObjectID().Hex()
 	err = r.Delete(context.Background(), id)
 	assert.Error(t, err)
+
+	t.Cleanup(func() {
+		r.Drop(context.Background())
+	})
 }
