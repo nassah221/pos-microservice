@@ -38,7 +38,7 @@ message DeleteCashierResponse {
 }
 
 service CashierService {
-    rpc Signup(Cashier) returns (Cashier);
+    rpc Signup(Cashier) returns (GetCashierRequest);
     rpc Signin(SigninRequest) returns (SigninResponse);
     rpc GetCashier(GetCashierRequest) returns (Cashier);
     rpc ListCashiers(ListCashiersRequest) returns (ListCashiersResponse);

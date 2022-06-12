@@ -22,7 +22,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CashierServiceClient interface {
-	Signup(ctx context.Context, in *Cashier, opts ...grpc.CallOption) (*Cashier, error)
+	Signup(ctx context.Context, in *Cashier, opts ...grpc.CallOption) (*GetCashierRequest, error)
 	Signin(ctx context.Context, in *SigninRequest, opts ...grpc.CallOption) (*SigninResponse, error)
 	GetCashier(ctx context.Context, in *GetCashierRequest, opts ...grpc.CallOption) (*Cashier, error)
 	ListCashiers(ctx context.Context, in *ListCashiersRequest, opts ...grpc.CallOption) (*ListCashiersResponse, error)
@@ -38,8 +38,8 @@ func NewCashierServiceClient(cc grpc.ClientConnInterface) CashierServiceClient {
 	return &cashierServiceClient{cc}
 }
 
-func (c *cashierServiceClient) Signup(ctx context.Context, in *Cashier, opts ...grpc.CallOption) (*Cashier, error) {
-	out := new(Cashier)
+func (c *cashierServiceClient) Signup(ctx context.Context, in *Cashier, opts ...grpc.CallOption) (*GetCashierRequest, error) {
+	out := new(GetCashierRequest)
 	err := c.cc.Invoke(ctx, "/cashier.CashierService/Signup", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -96,7 +96,7 @@ func (c *cashierServiceClient) DeleteCashier(ctx context.Context, in *GetCashier
 // All implementations must embed UnimplementedCashierServiceServer
 // for forward compatibility
 type CashierServiceServer interface {
-	Signup(context.Context, *Cashier) (*Cashier, error)
+	Signup(context.Context, *Cashier) (*GetCashierRequest, error)
 	Signin(context.Context, *SigninRequest) (*SigninResponse, error)
 	GetCashier(context.Context, *GetCashierRequest) (*Cashier, error)
 	ListCashiers(context.Context, *ListCashiersRequest) (*ListCashiersResponse, error)
@@ -109,7 +109,7 @@ type CashierServiceServer interface {
 type UnimplementedCashierServiceServer struct {
 }
 
-func (UnimplementedCashierServiceServer) Signup(context.Context, *Cashier) (*Cashier, error) {
+func (UnimplementedCashierServiceServer) Signup(context.Context, *Cashier) (*GetCashierRequest, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Signup not implemented")
 }
 func (UnimplementedCashierServiceServer) Signin(context.Context, *SigninRequest) (*SigninResponse, error) {
