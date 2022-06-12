@@ -8,7 +8,7 @@ import (
 )
 
 type Authenticator interface {
-	IssueToken(user, id string, duration time.Duration) (string, error)
+	IssueToken(user string, duration time.Duration) (string, error)
 	VerifyToken(token string) (*jwt.Token, error)
 }
 
@@ -20,7 +20,7 @@ func NewAuthenticator(key string) Authenticator {
 	return &auth{key}
 }
 
-func (a *auth) IssueToken(user, id string, duration time.Duration) (string, error) {
+func (a *auth) IssueToken(user string, duration time.Duration) (string, error) {
 	now := time.Now()
 
 	defaultExpiry := time.Second * 1
@@ -38,7 +38,6 @@ func (a *auth) IssueToken(user, id string, duration time.Duration) (string, erro
 
 		// custom claims
 		"user": user,
-		"id":   id,
 	})
 
 	tokenString, err := token.SignedString([]byte(a.key))

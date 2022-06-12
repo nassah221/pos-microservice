@@ -15,7 +15,7 @@ func init() {
 }
 
 func TestAuth(t *testing.T) {
-	tokenString, err := jwtMaker.IssueToken("user", "id", time.Second)
+	tokenString, err := jwtMaker.IssueToken("user", time.Second)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, tokenString)
 
